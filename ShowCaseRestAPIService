@@ -1,0 +1,104 @@
+@RestResource(urlMapping='/ShowCaseInfo/*')
+global class ShowCaseRestAPIService {
+	
+    global class ShowCaseReq
+    {
+         Public String  Id;
+        
+    }
+    
+    global class ResponseWrapper{
+         public Boolean isSuccess;
+         public String code;
+         public String message;
+         Public String caseNo;
+         Public String caseStatus;
+         Public String priority;
+         Public String createDate;
+         Public String caseOwnerName;
+         
+     }
+    
+    global class UpdateCaseReq
+    {
+        Public String caseId;
+        Public String Priority;
+        Public String caseStatus;
+        Public String ResolutionDate;
+        Public String CustomerType;
+     }
+       global class ResponseUpdateWrapper{
+         public Boolean isSuccess;
+         public String code;
+         public String message;
+         Public String caseId;
+         Public String caseStatus;
+         Public String priority;
+         Public String ResolutionDate;
+         Public String CustomerType;
+         
+     }
+
+     @httpPost
+    global static ResponseUpdateWrapper getCaseInfo(UpdateCaseReq request)
+    {
+        String caseId=request.caseId;
+        ResponseUpdateWrapper response = new ResponseUpdateWrapper();  
+        
+        List<case> caseRec=[select id, Resolution_Date__c	,Customer_Type__c, status, priority from case  where Id=: caseId];        	
+        if (String.isBlank(caseId) || caseRec.size()==0 || String.isBlank(request.ResolutionDate) || String.isBlank(request.CustomerType)){
+            
+            response.Message = 'Exception : Required field missing [CaseID or Resolution Date ] or not available ';
+            response.Code = 'ERROR 400 : Bad Request';
+            response.IsSuccess=false;
+            return response; 
+        }
+        else{
+           		response.caseStatus=String.valueOf(caseRec[0].Status);
+        		response.caseId=request.caseId;
+        		response.priority=caseRec[0].priority;
+        		response.ResolutionDate=String.valueOf(caseRec[0].Resolution_Date__c);
+        		response.CustomerType=caseRec[0].Customer_Type__c;
+           		response.Message = 'Request Successfully Completed.';
+				response.Code = '500';
+           		response.IsSuccess=true;
+            	return response; 
+            }
+		}
+
+    @httpGet
+    global static ResponseWrapper getCaseInfo()
+    {
+       
+        ResponseWrapper response = new ResponseWrapper();  
+        RestRequest request = RestContext.request;
+       // RestResponse res = Restcontext.response;
+        //Get input conId from the request string.
+        String caseId = request.requestURI.substring(request.requestURI.lastIndexOf('/')+1);
+        // Get the list of case by passing input caseId. In this case, it will return only 1 record.
+        List<case> caseRec=[select id, Resolution_Date__c	,Customer_Type__c, status, priority from case  where Id=: caseId Limit 1 ];
+       
+        if (String.isBlank(caseId) || caseRec.size()==0){
+            
+            response.Message = 'Exception : Required field missing [CaseID] or not available ';
+            response.Code = 'ERROR 400 : Bad Request';
+            response.IsSuccess=false;
+            return response; 
+        }
+         else{
+            
+            	response.caseNo=String.valueOf(caseRec[0].CaseNumber);
+        		response.caseStatus=String.valueOf(caseRec[0].Status);
+        	
+        		response.priority=caseRec[0].priority;
+        		response.createDate=String.valueOf(caseRec[0].CreatedDate);
+        		response.caseOwnerName=caseRec[0].Owner.Name;
+           		response.Message = 'Request Successfully Completed.';
+				response.Code = '500';
+           		response.IsSuccess=true;
+            	return response; 
+            }
+  		  
+
+		}
+}
